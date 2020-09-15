@@ -1,27 +1,80 @@
 import Vue from 'vue'
-import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import Router from 'vue-router'
+import Layout from '@/layout'
 
-Vue.use(VueRouter)
+//避免报错 Avoided redundant navigation to current location
+// const originalPush = Router.prototype.push;
+// Router.prototype.push = function(location) {
+//   return originalPush.call(this, location).catch(err => err)
+// }
+Vue.use(Router)
 
-const routes = [
+export const constantRoutes = [
   {
-    path: '/',
-    name: 'Home',
-    component: Home
+    path: '/redirect',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '/redirect/:path*',
+        component: () => import('@/views/redirect/index')
+      }
+    ]
   },
   {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
+    path: '/',
+    component: Layout,
+    redirect: 'dashboard',
+    meta:{code:'home'},
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/home/index'),
+        name: 'Dashboard',
+        meta: { title: '首页', icon: 'dashboard', code: 'home',affix:true }
+      }
+    ]
+  },
+  {
+    path: '/login',
+    component: () => import('@/views/login/index'),
+    hidden: true
+  },
+  {
+    path: '/article',
+    component: Layout,
+    redirect: 'noRedirect',
+    name: 'Article',
+    meta: {
+      title: '文章管理',
+      icon: 'component',
+      hasMenu:true
+     
+    },
+    children: [
+      {
+        path: 'create',
+        component: () => import('@/views/article-manager/create'),
+        name: 'CreateArticle',
+        meta: { title: '创建文章', icon: 'edit' }
+      },
+     
+    ]
+  },
+
+
 ]
 
-const router = new VueRouter({
-  routes
+const createRouter = () => new Router({
+  scrollBehavior: () => ({ y: 0 }),//当转到一个新的页面时，定位到最顶端。
+  routes: constantRoutes
 })
 
+const router = createRouter()
+//重置路由
+export function resetRouter() {
+  const newRouter = createRouter()
+  router.matcher = newRouter.matcher
+  router.addRoutes([])
+}
 export default router
